@@ -74,7 +74,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--year", type=int, default=date.today().year - 1)
     ap.add_argument("--schwab", type=Path, default=HERE / "inputs/schwab.csv")
-    ap.add_argument("--etrade", type=Path, default=HERE / "inputs/etrade.csv")
+    ap.add_argument("--etrade", type=Path, default=HERE / "inputs/G&L_Expanded.xlsx")
     ap.add_argument("--output-dir", type=Path, default=HERE / "output")
     args = ap.parse_args()
 
@@ -201,6 +201,42 @@ def main() -> None:
     print(f"  Försäljningspris    : {total_fp:,.2f} SEK")
     print(f"  Omkostnadsbelopp    : {total_omk:,.2f} SEK")
     print(f"  Vinst/förlust       : {total_vl:,.2f} SEK")
+
+    # K4-blanketten avsnitt A (marknadsnoterade aktier): en rad per värdepapper,
+    # belopp i hela kronor. Skatteverket avrundar varje fält var för sig.
+    per_symbol: dict[str, dict] = {}
+    for s in compute_year.sales:
+        agg = per_symbol.setdefault(s["symbol"], {"antal": 0.0, "fp": 0.0, "omk": 0.0})
+        agg["antal"] += s["qty"]
+        agg["fp"] += s["forsaljningspris_sek"]
+        agg["omk"] += s["omkostnadsbelopp_sek"]
+
+    print(f"\n=== Skriv detta på K4-blanketten (avsnitt A), år {args.year} ===")
+    print("(En rad per beteckning. Belopp i hela kronor.)\n")
+    print("Avsnitt A — en rad per värdepapper:")
+    print(f"  {'Antal':>8}  {'Beteckning':<12} {'Försäljningspris':>18} "
+          f"{'Omkostnadsbelopp':>18} {'Vinst':>10} {'Förlust':>10}")
+    sum_fp = sum_omk = sum_vinst = sum_forlust = 0
+    for sym in sorted(per_symbol):
+        a = per_symbol[sym]
+        antal = round(a["antal"])
+        fp = round(a["fp"])
+        omk = round(a["omk"])
+        vl = fp - omk
+        vinst = vl if vl > 0 else 0
+        forlust = -vl if vl < 0 else 0
+        sum_fp += fp
+        sum_omk += omk
+        sum_vinst += vinst
+        sum_forlust += forlust
+        print(f"  {antal:>8d}  {sym:<12} {fp:>18,d} {omk:>18,d} "
+              f"{vinst:>10,d} {forlust:>10,d}".replace(",", " "))
+
+    print("\nSummeringsfälten under avsnitt A (fyll i totalerna):")
+    print(f"  7.1 Summa försäljningspris : {sum_fp:>10,d} kr".replace(",", " "))
+    print(f"  7.2 Summa omkostnadsbelopp : {sum_omk:>10,d} kr".replace(",", " "))
+    print(f"  7.3 Summa vinst            : {sum_vinst:>10,d} kr".replace(",", " "))
+    print(f"  7.4 Summa förlust          : {sum_forlust:>10,d} kr".replace(",", " "))
 
 
 if __name__ == "__main__":
