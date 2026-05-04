@@ -6,8 +6,6 @@ A parser for RSU/ESPP stock sales via Schwab or E-trade
 Make sure that the file(s) etrade.csv and/or schwab.csv are in a folder inputs/ in the project root directory
 
 # usage
-python3 deklaration.py
-=======
 
 Parser for RSU/ESPP stock sales from Schwab and E-Trade / Morgan Stanley,
 producing a Swedish K4 tax report (in SEK) using the *genomsnittsmetoden*
