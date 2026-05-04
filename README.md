@@ -53,4 +53,3 @@ Written to `output/`:
 - `audit_log.csv` — all transactions with FX rates and pool state.
 
 Riksbanken FX rates are cached under `cache/`.
->>>>>>> 6925ce8 (use xlsx for E-trade)
